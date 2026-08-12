@@ -39,8 +39,8 @@ across sessions.
 ## Run it locally
 
 ```bash
-git clone <this-repo-url>
-cd sourcing-outreach-agent
+git clone https://github.com/rishijalanwe-cmd/sourcing-outreach-web.git
+cd sourcing-outreach-web
 npm install -g vercel   # if you don't have it
 vercel dev
 ```
@@ -57,20 +57,21 @@ Run the (mocked, no real keys needed) test suite for `api/source.js` with `npm t
 ```bash
 npm install -g vercel   # if you don't have it
 vercel login
-cd sourcing-outreach-agent
+cd sourcing-outreach-web
 vercel --prod
 ```
 That's it. Vercel prints a live URL. No environment variables to configure — this project
 doesn't need any.
 
-**Proper open-source path — a public GitHub repo with continuous deployment:**
-1. Create a new repo on GitHub (public, so it's genuinely open source), then from this folder:
+**Public GitHub repo with continuous deployment (this is how the live copy runs):**
+1. Fork or clone [github.com/rishijalanwe-cmd/sourcing-outreach-web](https://github.com/rishijalanwe-cmd/sourcing-outreach-web),
+   or push your own copy the same way:
    ```bash
    git init
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/<you>/sourcing-outreach-agent.git
+   git remote add origin https://github.com/<you>/sourcing-outreach-web.git
    git push -u origin main
    ```
 2. Go to [vercel.com/new](https://vercel.com/new), sign in (GitHub OAuth is the easy path),
