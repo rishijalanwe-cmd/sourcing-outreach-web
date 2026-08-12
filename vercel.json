@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/source.js": {
+      "maxDuration": 300
+    }
+  }
+}

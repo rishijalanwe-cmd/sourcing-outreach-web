@@ -1,0 +1,11 @@
+{
+  "name": "sourcing-outreach-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bring-your-own-keys recruiting tool: source candidates against a scorecard and draft (never send) personalized LinkedIn outreach.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node api/source.test.js"
+  }
+}

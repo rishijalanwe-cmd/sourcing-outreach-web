@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sourcing + Outreach Agent</title>
+<style>
+  :root{
+    --bg:#f6f5f3; --panel:#ffffff; --border:#e5e2dc; --text:#1f1c18; --muted:#78726a;
+    --accent:#6b4ce6; --accent-dark:#5638c9; --accent-soft:#f0ecff;
+    --good:#1f8a55; --good-soft:#e7f6ee; --warn:#b9770e; --warn-soft:#fdf1de;
+    --bad:#c23b3b; --bad-soft:#fbe9e9; --radius:12px;
+    --shadow:0 1px 2px rgba(20,16,8,.04), 0 6px 20px rgba(20,16,8,.05);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 80px;}
+  header.top{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--accent),#9b7cf2); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:15px;}
+  .brand h1{font-size:17px; margin:0; font-weight:650;}
+  .brand p{margin:0; font-size:12.5px; color:var(--muted);}
+  .status-pill{font-size:12px; padding:5px 11px; border-radius:99px; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; border:none;}
+  .status-pill.demo{background:var(--warn-soft); color:var(--warn);}
+  .status-pill.live{background:var(--good-soft); color:var(--good);}
+  .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+
+  nav.tabs{display:flex; gap:4px; background:var(--panel); border:1px solid var(--border); padding:4px; border-radius:11px; margin-bottom:22px; width:fit-content;}
+  nav.tabs button{border:none; background:transparent; padding:9px 16px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer;}
+  nav.tabs button.active{background:var(--accent); color:#fff;}
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px;}
+  .panel + .panel{margin-top:18px;}
+  .panel h2{margin:0 0 4px; font-size:15px;}
+  .panel .sub{margin:0 0 18px; font-size:12.5px; color:var(--muted);}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field.full{grid-column:1 / -1;}
+  .field label{font-size:12px; font-weight:650; color:#4a453e;}
+  .field .hint{font-size:11px; color:var(--muted); margin-top:-2px;}
+  input[type=text], input[type=number], input[type=url], input[type=password], textarea, select{
+    font-family:inherit; font-size:13.5px; padding:9px 11px; border:1px solid var(--border);
+    border-radius:8px; background:#fdfcfb; color:var(--text); width:100%;
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--accent-soft); border-color:var(--accent);}
+  textarea{resize:vertical; min-height:60px;}
+
+  .btn{border:none; border-radius:8px; padding:10px 16px; font-size:13.5px; font-weight:650; cursor:pointer; display:inline-flex; align-items:center; gap:7px;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .btn-ghost:hover{background:#f2f0ec;}
+  .btn-sm{padding:6px 11px; font-size:12px; border-radius:7px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .row-actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:6px; padding:8px; border:1px solid var(--border); border-radius:8px; background:#fdfcfb; min-height:40px;}
+  .chip{background:var(--accent-soft); color:var(--accent-dark); font-size:12px; font-weight:600; padding:4px 8px; border-radius:99px; display:flex; align-items:center; gap:6px;}
+  .chip button{border:none; background:transparent; color:var(--accent-dark); cursor:pointer; font-size:13px; line-height:1; padding:0;}
+  .chip-input{border:none; outline:none; flex:1; min-width:120px; font-size:13px; padding:4px;}
+
+  .banner{padding:11px 14px; border-radius:9px; font-size:12.5px; margin-bottom:16px; display:flex; gap:8px; align-items:flex-start;}
+  .banner.info{background:var(--accent-soft); color:var(--accent-dark);}
+  .banner.warn{background:var(--warn-soft); color:var(--warn);}
+  .banner.error{background:var(--bad-soft); color:var(--bad);}
+  .banner.good{background:var(--good-soft); color:var(--good);}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:14px; margin-top:18px;}
+  .card{border:1px solid var(--border); border-radius:11px; padding:15px; background:#fdfcfb; display:flex; flex-direction:column; gap:10px;}
+  .card .who{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .card .who h3{margin:0; font-size:14.5px;}
+  .card .who .role{font-size:12px; color:var(--muted); margin-top:2px;}
+  .score{font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:99px; white-space:nowrap;}
+  .score.s5, .score.s4{background:var(--good-soft); color:var(--good);}
+  .score.s3{background:var(--warn-soft); color:var(--warn);}
+  .score.s2, .score.s1{background:var(--bad-soft); color:var(--bad);}
+  .reason{font-size:12.5px; color:#544f47; background:#f2f0ec; padding:8px 10px; border-radius:8px; line-height:1.45;}
+  .msg-block{border:1px dashed var(--border); border-radius:8px; padding:10px;}
+  .msg-block .label{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:700; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;}
+  .msg-block p{margin:0; font-size:12.5px; line-height:1.5; white-space:pre-wrap;}
+  .card .meta-row{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;}
+  .card a.li{font-size:12px; color:var(--accent-dark); text-decoration:none; font-weight:600;}
+  .card a.li:hover{text-decoration:underline;}
+  .copy-btn{border:none; background:transparent; color:var(--accent-dark); font-size:11px; font-weight:700; cursor:pointer;}
+  select.status-select{font-size:12px; padding:5px 8px; border-radius:7px; font-weight:600;}
+
+  .kanban{display:grid; grid-template-columns:repeat(6,minmax(190px,1fr)); gap:12px; overflow-x:auto; margin-top:16px;}
+  .kcol{background:#f2f0ec; border-radius:10px; padding:10px; min-height:100px;}
+  .kcol h4{margin:0 0 8px; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); display:flex; justify-content:space-between;}
+  .kcard{background:#fff; border:1px solid var(--border); border-radius:8px; padding:9px; margin-bottom:8px; font-size:12px;}
+  .kcard .n{font-weight:650; font-size:12.5px;}
+  .kcard .t{color:var(--muted); font-size:11px; margin-top:1px;}
+
+  .empty{text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;}
+  .spinner{width:15px; height:15px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  code.inline{background:#f2f0ec; padding:1px 5px; border-radius:5px; font-size:12px;}
+  details summary{cursor:pointer; font-size:12.5px; font-weight:650; color:var(--accent-dark);}
+  details[open] summary{margin-bottom:10px;}
+  .small-note{font-size:11.5px; color:var(--muted); line-height:1.5;}
+  table.plain{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:14px;}
+  table.plain th{text-align:left; padding:8px; border-bottom:1px solid var(--border); color:var(--muted); font-weight:650; font-size:11px; text-transform:uppercase; letter-spacing:.02em;}
+  table.plain td{padding:9px 8px; border-bottom:1px solid #f0eee9; vertical-align:top;}
+  .keyrow{display:flex; gap:8px; align-items:center;}
+  .keyrow input{flex:1;}
+  footer.foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:28px;}
+  footer.foot a{color:var(--accent-dark);}
+  @media (max-width:720px){ .grid{grid-template-columns:1fr;} .kanban{grid-template-columns:repeat(3,minmax(160px,1fr));} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">SO</div>
+      <div>
+        <h1>Sourcing + Outreach Agent</h1>
+        <p>Find candidates against a scorecard. Draft outreach that isn't obviously templated. You still click send.</p>
+      </div>
+    </div>
+    <button id="connStatus" class="status-pill demo" title="Click to go to Setup"><span class="dot"></span>Add your API keys</button>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="source">Source</button>
+    <button data-tab="pipeline">Pipeline</button>
+    <button data-tab="setup">Your keys</button>
+  </nav>
+
+  <!-- SOURCE TAB -->
+  <section id="tab-source">
+    <div class="panel">
+      <h2>1. Describe who you're looking for</h2>
+      <p class="sub">This is your scorecard's search brief, not a job title. The more specific the must-haves, the better the match quality.</p>
+
+      <div class="grid">
+        <div class="field">
+          <label>Target title(s)</label>
+          <input type="text" id="f-title" placeholder="e.g. Senior Backend Engineer, Staff Engineer">
+        </div>
+        <div class="field">
+          <label>Seniority</label>
+          <select id="f-seniority">
+            <option>Entry</option><option>Mid</option><option selected>Senior</option><option>Staff / Principal</option><option>Manager</option><option>Director+</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Must-have signals</label>
+          <div class="chips" id="chips-must" data-target="mustHave"><input class="chip-input" placeholder="Type and press Enter…"></div>
+        </div>
+        <div class="field">
+          <label>Nice-to-have signals</label>
+          <div class="chips" id="chips-nice" data-target="niceToHave"><input class="chip-input" placeholder="Type and press Enter…"></div>
+        </div>
+        <div class="field">
+          <label>Disqualifiers</label>
+          <div class="chips" id="chips-dq" data-target="disqualifiers"><input class="chip-input" placeholder="Type and press Enter…"></div>
+        </div>
+        <div class="field">
+          <label>Company pool</label>
+          <input type="text" id="f-companies" placeholder="e.g. Series A-C fintech, 20-200 people, or named competitors">
+        </div>
+        <div class="field">
+          <label>Location / timezone</label>
+          <input type="text" id="f-location" placeholder="e.g. US, remote-friendly / IST ±3">
+        </div>
+        <div class="field">
+          <label>Max candidates this run</label>
+          <input type="number" id="f-max" value="15" min="1" max="30">
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-find">Find candidates</button>
+        <button class="btn btn-ghost" id="btn-demo">Try with sample data</button>
+        <button class="btn btn-ghost" id="btn-export" disabled>Export CSV</button>
+      </div>
+      <div id="source-banner"></div>
+    </div>
+
+    <div id="results-wrap"></div>
+  </section>
+
+  <!-- PIPELINE TAB -->
+  <section id="tab-pipeline" style="display:none;">
+    <div class="panel">
+      <h2>Pipeline</h2>
+      <p class="sub">This tool has no server-side database — nothing about who you've sourced is stored anywhere but your own browser. Export a CSV after each run to keep a record, and load it back here any time to pick up where you left off.</p>
+      <div class="row-actions">
+        <label class="btn btn-ghost btn-sm" for="file-pipeline-csv" style="cursor:pointer;">Load a CSV you exported earlier
+          <input type="file" id="file-pipeline-csv" accept=".csv,text/csv" style="display:none;">
+        </label>
+        <button class="btn btn-ghost btn-sm" id="btn-view-toggle">Switch to table view</button>
+      </div>
+      <div id="pipeline-banner"></div>
+      <div id="pipeline-wrap"></div>
+    </div>
+  </section>
+
+  <!-- SETUP TAB -->
+  <section id="tab-setup" style="display:none;">
+    <div class="panel">
+      <h2>Your API keys</h2>
+      <p class="sub">This is a bring-your-own-keys tool — everyone who uses this page pays for their own searches. Your keys are sent straight from your browser to this site's own backend, which forwards them to Exa / Apollo / your chosen LLM for <em>your</em> request only. Nothing is logged, stored, or shared, and there's no database anywhere in this project. Keys live in memory for this tab only — reload the page and you'll paste them again, on purpose.</p>
+
+      <div class="grid">
+        <div class="field full">
+          <label>Exa API key <span class="small-note">(required — free tier at <a href="https://exa.ai" target="_blank" rel="noopener">exa.ai</a>)</span></label>
+          <div class="keyrow"><input type="password" id="k-exa" placeholder="exa_..." autocomplete="off"></div>
+        </div>
+        <div class="field full">
+          <label>Apollo API key <span class="small-note">(optional — enables email lookup, <a href="https://apollo.io" target="_blank" rel="noopener">apollo.io</a>)</span></label>
+          <div class="keyrow"><input type="password" id="k-apollo" placeholder="Optional" autocomplete="off"></div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:22px;">LLM provider</h2>
+      <p class="sub">Used to score candidates and draft outreach. Pick whichever you already have a key for.</p>
+      <div class="grid">
+        <div class="field">
+          <label>Provider</label>
+          <select id="k-llm-provider">
+            <option value="anthropic" selected>Anthropic (Claude)</option>
+            <option value="openai">OpenAI</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="custom">Custom (any OpenAI-compatible endpoint)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Model <span class="small-note" id="k-llm-model-hint">(optional — defaults to a current Claude model)</span></label>
+          <input type="text" id="k-llm-model" placeholder="e.g. claude-sonnet-4-5-20250929">
+        </div>
+        <div class="field full" id="k-llm-baseurl-field" style="display:none;">
+          <label>Base URL <span class="small-note">(required for Custom — your OpenAI-compatible server, e.g. http://localhost:11434/v1)</span></label>
+          <input type="text" id="k-llm-baseurl" placeholder="https://your-endpoint.example/v1">
+        </div>
+        <div class="field full">
+          <label>API key <span class="small-note">(required — from whichever provider you picked above)</span></label>
+          <div class="keyrow"><input type="password" id="k-llm-key" placeholder="Paste your provider's API key" autocomplete="off"></div>
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-save-keys">Save for this session</button>
+        <button class="btn btn-ghost" id="btn-show-keys">Show/hide keys</button>
+      </div>
+      <div id="setup-banner"></div>
+
+      <details style="margin-top:20px;">
+        <summary>How this works, and why it needs your own keys</summary>
+        <p class="small-note">
+          This page is free for anyone to use — but Exa and your chosen LLM provider both charge per request, and this site has no login. If it used one shared key, anyone with the link could run up someone else's bill with no way to stop them. Bring-your-own-keys means the only person who can ever be charged for your search is you.<br><br>
+          <strong>What happens when you click "Find candidates":</strong> your ICP and your keys are sent once, over HTTPS, to this site's own <code class="inline">/api/source</code> function. That function calls Exa to search, asks your chosen LLM to score and shortlist against your must-haves, optionally calls Apollo to find a verified email for each shortlisted candidate, then asks the LLM to draft a connection note and follow-up for each one. The results come straight back to this page. Nothing is written to a database — there isn't one.<br><br>
+          Nothing here ever sends a LinkedIn connection request, message, or email automatically. Every draft is exactly that — a draft. You copy it and send it yourself, from your own account.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <footer class="foot">Runs entirely on your own API keys — no login, no database, nothing stored server-side.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- state ----------
+  var state = {
+    keys: { exa:"", apollo:"", llmProvider:"anthropic", llmApiKey:"", llmModel:"", llmBaseUrl:"" },
+    icp: { mustHave:[], niceToHave:[], disqualifiers:[] },
+    candidates: [],
+    pipelineView: "kanban"
+  };
+
+  var LLM_MODEL_HINTS = {
+    anthropic: "(optional — defaults to a current Claude model)",
+    openai: "(optional — defaults to gpt-4o-mini)",
+    openrouter: "(required — e.g. anthropic/claude-3.5-sonnet, openai/gpt-4o-mini)",
+    custom: "(required — the model name your endpoint expects)"
+  };
+
+  var STATUSES = ["New","Reviewed","Contacted","Replied","Screening","Rejected"];
+
+  // ---------- tabs ----------
+  document.querySelectorAll("nav.tabs button").forEach(function(btn){
+    btn.addEventListener("click", function(){ activateTab(btn.dataset.tab); });
+  });
+  function activateTab(tab){
+    document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === tab); });
+    ["source","pipeline","setup"].forEach(function(t){
+      document.getElementById("tab-"+t).style.display = (t === tab) ? "" : "none";
+    });
+  }
+  document.getElementById("connStatus").addEventListener("click", function(){ activateTab("setup"); });
+
+  // ---------- chips (tag inputs) ----------
+  document.querySelectorAll(".chips").forEach(function(box){
+    var input = box.querySelector(".chip-input");
+    var target = box.dataset.target;
+    input.addEventListener("keydown", function(e){
+      if (e.key === "Enter" && input.value.trim()){
+        e.preventDefault();
+        addChip(box, target, input.value.trim());
+        input.value = "";
+      }
+    });
+  });
+  function addChip(box, target, text){
+    state.icp[target].push(text);
+    var chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = text;
+    var x = document.createElement("button");
+    x.textContent = "×";
+    x.addEventListener("click", function(){
+      var idx = state.icp[target].indexOf(text);
+      if (idx > -1) state.icp[target].splice(idx,1);
+      chip.remove();
+    });
+    chip.appendChild(x);
+    box.insertBefore(chip, box.querySelector(".chip-input"));
+  }
+
+  // ---------- keys ----------
+  function updateConnBadge(){
+    var badge = document.getElementById("connStatus");
+    var ready = state.keys.exa && state.keys.llmApiKey;
+    if (ready){
+      badge.className = "status-pill live";
+      badge.innerHTML = '<span class="dot"></span>Keys set — ready';
+    } else {
+      badge.className = "status-pill demo";
+      badge.innerHTML = '<span class="dot"></span>Add your API keys';
+    }
+  }
+
+  // Show/hide the Base URL field and update the model hint based on the chosen provider.
+  function syncLlmProviderUI(){
+    var provider = document.getElementById("k-llm-provider").value;
+    document.getElementById("k-llm-baseurl-field").style.display = (provider === "custom") ? "" : "none";
+    var hint = document.getElementById("k-llm-model-hint");
+    if (hint) hint.textContent = LLM_MODEL_HINTS[provider] || "";
+  }
+  document.getElementById("k-llm-provider").addEventListener("change", syncLlmProviderUI);
+  syncLlmProviderUI();
+
+  document.getElementById("btn-save-keys").addEventListener("click", function(){
+    state.keys.exa = document.getElementById("k-exa").value.trim();
+    state.keys.apollo = document.getElementById("k-apollo").value.trim();
+    state.keys.llmProvider = document.getElementById("k-llm-provider").value;
+    state.keys.llmModel = document.getElementById("k-llm-model").value.trim();
+    state.keys.llmBaseUrl = document.getElementById("k-llm-baseurl").value.trim();
+    state.keys.llmApiKey = document.getElementById("k-llm-key").value.trim();
+    updateConnBadge();
+    if (!state.keys.exa || !state.keys.llmApiKey){
+      showBanner("setup-banner","warn","An Exa key and an LLM provider key are both required. Apollo is optional.");
+    } else if (state.keys.llmProvider === "custom" && !state.keys.llmBaseUrl){
+      showBanner("setup-banner","warn","Custom provider needs a Base URL too.");
+    } else if ((state.keys.llmProvider === "openrouter" || state.keys.llmProvider === "custom") && !state.keys.llmModel){
+      showBanner("setup-banner","warn","That provider has no default model — enter one.");
+    } else {
+      showBanner("setup-banner","good","Saved for this browser tab. Reload the page and you'll need to paste them again — that's intentional, nothing is stored.");
+    }
+  });
+
+  document.getElementById("btn-show-keys").addEventListener("click", function(){
+    ["k-exa","k-llm-key","k-apollo"].forEach(function(id){
+      var el = document.getElementById(id);
+      el.type = el.type === "password" ? "text" : "password";
+    });
+  });
+
+  // ---------- banners ----------
+  function showBanner(id, kind, text){
+    document.getElementById(id).innerHTML = '<div class="banner ' + kind + '">' + text + '</div>';
+  }
+  function clearBanner(id){ document.getElementById(id).innerHTML = ""; }
+
+  // ---------- sample data ----------
+  function sampleCandidates(){
+    return [
+      {
+        id:"demo-1", name:"Priya Raman", title:"Senior Backend Engineer", company:"Recur Payments",
+        location:"Bengaluru, India", linkedinUrl:"https://www.linkedin.com/in/example-priya",
+        matchScore:5, matchReason:"Led the ledger rewrite at Recur (Series B fintech, ~90 people) — direct billing/payments experience, matches must-have.",
+        email:"priya@example.com",
+        connectionNote:"Hi Priya — saw you led the ledger rewrite at Recur. We're building something similar at an earlier stage and I'd love to connect.",
+        followUpMessage:"Thanks for connecting! The ledger rewrite you led at Recur is exactly the kind of problem we're heading into — we're rebuilding billing from scratch at a Series A. You'd own the migration end to end, not just implement someone else's spec. Comp and stage are real talking points, not a pitch deck. Open to a 15-min call this week, no pressure if the timing's off?",
+        status:"New"
+      },
+      {
+        id:"demo-2", name:"Jordan Ahn", title:"Staff Engineer", company:"Fintrace",
+        location:"Remote (US)", linkedinUrl:"https://www.linkedin.com/in/example-jordan",
+        matchScore:4, matchReason:"Staff-level at a Series C fintech, strong distributed-systems background; slightly more senior than the band but worth a look.",
+        email:null,
+        connectionNote:"Hi Jordan — your post on idempotency keys in payment retries was a good one. Reaching out about a backend role that's close to that problem space.",
+        followUpMessage:"Appreciate you connecting. That post on idempotency in payment retries is close to a problem we're solving right now — rebuilding the billing core at a Series A. It'd mean less scale than Fintrace but a lot more ownership of the architecture from day one. Worth a 15-min call to see if the trade-off is interesting to you?",
+        status:"New"
+      },
+      {
+        id:"demo-3", name:"Sam Okafor", title:"Backend Engineer", company:"Ledgerly",
+        location:"London, UK", linkedinUrl:"https://www.linkedin.com/in/example-sam",
+        matchScore:4, matchReason:"3 years on Ledgerly's core transactions team, meets must-have on payments experience, timezone is a stretch (GMT vs IST).",
+        email:"sam@example.com",
+        connectionNote:"Hi Sam — noticed you've been on Ledgerly's transactions team for a few years now. Working on something in the same space and would love to connect.",
+        followUpMessage:"Thanks for accepting! A few years deep on Ledgerly's transactions team is exactly the background we need — we're rebuilding billing at an early-stage fintech and could use someone who's already seen the sharp edges. Timezone overlap would need talking through honestly. Open to a quick call to see if it's worth exploring?",
+        status:"New"
+      }
+    ];
+  }
+
+  document.getElementById("btn-demo").addEventListener("click", function(){
+    state.candidates = sampleCandidates();
+    renderResults();
+    document.getElementById("btn-export").disabled = false;
+    showBanner("source-banner","info","Loaded 3 sample candidates so you can see the format. These aren't real people — add your API keys to source real ones.");
+  });
+
+  // ---------- find candidates (live) ----------
+  document.getElementById("btn-find").addEventListener("click", function(){
+    if (!state.keys.exa || !state.keys.llmApiKey){
+      showBanner("source-banner","warn","Add your Exa key and an LLM provider key in the \"Your keys\" tab first, or click \"Try with sample data\" to preview the format.");
+      return;
+    }
+    var icp = {
+      roleTitle: document.getElementById("f-title").value.trim(),
+      seniority: document.getElementById("f-seniority").value,
+      mustHave: state.icp.mustHave,
+      niceToHave: state.icp.niceToHave,
+      disqualifiers: state.icp.disqualifiers,
+      companyPool: document.getElementById("f-companies").value.trim(),
+      location: document.getElementById("f-location").value.trim(),
+      maxCandidates: parseInt(document.getElementById("f-max").value, 10) || 15
+    };
+    if (!icp.roleTitle){
+      showBanner("source-banner","warn","Add a target title before searching.");
+      return;
+    }
+    var btn = document.getElementById("btn-find");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Searching…';
+    clearBanner("source-banner");
+
+    fetch("/api/source", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ icp: icp, keys: state.keys })
+    }).then(function(res){
+      // Read as text first -- a platform-level error (timeout, crash) returns plain
+      // text/HTML, not JSON, and calling res.json() directly on that throws a confusing
+      // "Unexpected token" error instead of a readable message.
+      return res.text().then(function(raw){
+        var data;
+        try { data = JSON.parse(raw); }
+        catch (e) {
+          if (res.status === 504) {
+            throw new Error("The search took too long and timed out (504). Try lowering \"Max candidates,\" or removing your Apollo key temporarily to skip enrichment, then retry.");
+          }
+          throw new Error("Server returned an unexpected response (status " + res.status + "). " + raw.slice(0, 150));
+        }
+        if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
+        return data;
+      });
+    }).then(function(data){
+      var list = data.candidates || [];
+      state.candidates = list;
+      renderResults();
+      document.getElementById("btn-export").disabled = list.length === 0;
+      if (list.length){
+        showBanner("source-banner","good", list.length + " candidate" + (list.length===1?"":"s") + " found. Review before sending anything.");
+      } else {
+        showBanner("source-banner","warn", data.note || "No candidates matched. Try broadening the ICP.");
+      }
+    }).catch(function(err){
+      showBanner("source-banner","error","Search failed: " + err.message);
+    }).finally(function(){
+      btn.disabled = false;
+      btn.textContent = "Find candidates";
+    });
+  });
+
+  // ---------- render candidate cards ----------
+  function renderResults(){
+    var wrap = document.getElementById("results-wrap");
+    if (!state.candidates.length){ wrap.innerHTML = ""; return; }
+    var html = '<div class="panel"><h2>2. Review &amp; send</h2><p class="sub">Nothing here has been sent. Copy what you like, edit what reads templated, send it yourself.</p><div class="cards">';
+    state.candidates.forEach(function(c){
+      var scoreClass = "s" + (c.matchScore || 3);
+      html += '<div class="card" data-id="' + escAttr(c.id) + '">' +
+        '<div class="who"><div><h3>' + esc(c.name) + '</h3><div class="role">' + esc(c.title) + ' @ ' + esc(c.company) + (c.location ? ' · ' + esc(c.location) : '') + '</div></div>' +
+        '<span class="score ' + scoreClass + '">' + (c.matchScore||"?") + '/5</span></div>' +
+        (c.matchReason ? '<div class="reason">' + esc(c.matchReason) + '</div>' : '') +
+        '<div class="msg-block"><div class="label">Connection note <button class="copy-btn" data-copy="note-'+escAttr(c.id)+'">Copy</button></div><p id="note-' + escAttr(c.id) + '">' + esc(c.connectionNote||"") + '</p></div>' +
+        '<div class="msg-block"><div class="label">Follow-up <button class="copy-btn" data-copy="fu-'+escAttr(c.id)+'">Copy</button></div><p id="fu-' + escAttr(c.id) + '">' + esc(c.followUpMessage||"") + '</p></div>' +
+        '<div class="meta-row">' +
+          (c.linkedinUrl ? '<a class="li" href="' + escAttr(c.linkedinUrl) + '" target="_blank" rel="noopener">Open LinkedIn profile ↗</a>' : '<span></span>') +
+          (c.email ? '<span class="small-note">' + esc(c.email) + '</span>' : '<span class="small-note">No email found</span>') +
+        '</div>' +
+        '<select class="status-select" data-id="' + escAttr(c.id) + '">' +
+          STATUSES.map(function(s){ return '<option value="'+s+'"'+(s===(c.status||"New")?' selected':'')+'>'+s+'</option>'; }).join("") +
+        '</select>' +
+      '</div>';
+    });
+    html += '</div></div>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll(".copy-btn").forEach(function(b){
+      b.addEventListener("click", function(){
+        var text = document.getElementById(b.dataset.copy).textContent;
+        navigator.clipboard && navigator.clipboard.writeText(text).then(function(){
+          var orig = b.textContent; b.textContent = "Copied"; setTimeout(function(){ b.textContent = orig; }, 1200);
+        }).catch(function(){});
+      });
+    });
+    wrap.querySelectorAll(".status-select").forEach(function(sel){
+      sel.addEventListener("change", function(){
+        var cand = state.candidates.find(function(c){ return c.id === sel.dataset.id; });
+        if (cand) cand.status = sel.value;
+      });
+    });
+  }
+
+  // ---------- CSV export ----------
+  document.getElementById("btn-export").addEventListener("click", function(){
+    var cols = ["id","name","title","company","location","linkedinUrl","matchScore","matchReason","email","connectionNote","followUpMessage","status"];
+    var rows = [cols.join(",")];
+    state.candidates.forEach(function(c){
+      rows.push(cols.map(function(k){ return csvField(c[k]); }).join(","));
+    });
+    var blob = new Blob([rows.join("\n")], { type:"text/csv;charset=utf-8;" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sourcing-pipeline.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+  function csvField(v){
+    if (v === undefined || v === null) return "";
+    var s = String(v);
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+
+  // ---------- pipeline tab (local CSV only -- no backend persistence) ----------
+  document.getElementById("file-pipeline-csv").addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    clearBanner("pipeline-banner");
+    var reader = new FileReader();
+    reader.onload = function(evt){
+      try {
+        var rows = parseCSV(evt.target.result);
+        renderPipeline(rows);
+        showBanner("pipeline-banner","good","Loaded " + rows.length + " candidate(s) from " + esc(file.name) + ".");
+      } catch(err){
+        showBanner("pipeline-banner","error","Couldn't parse that file as CSV (" + err.message + ").");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+  document.getElementById("btn-view-toggle").addEventListener("click", function(){
+    state.pipelineView = state.pipelineView === "kanban" ? "table" : "kanban";
+    document.getElementById("btn-view-toggle").textContent = state.pipelineView === "kanban" ? "Switch to table view" : "Switch to kanban view";
+    var wrap = document.getElementById("pipeline-wrap");
+    if (wrap.dataset.rows) renderPipeline(JSON.parse(wrap.dataset.rows));
+  });
+
+  function renderPipeline(rows){
+    var wrap = document.getElementById("pipeline-wrap");
+    wrap.dataset.rows = JSON.stringify(rows);
+    if (!rows.length){ wrap.innerHTML = '<div class="empty">No candidates loaded yet — load a CSV you exported earlier from the Source tab.</div>'; return; }
+    if (state.pipelineView === "kanban"){
+      var byStatus = {}; STATUSES.forEach(function(s){ byStatus[s] = []; });
+      rows.forEach(function(r){ var s = STATUSES.indexOf(r.status) > -1 ? r.status : "New"; byStatus[s].push(r); });
+      var html = '<div class="kanban">';
+      STATUSES.forEach(function(s){
+        html += '<div class="kcol"><h4>' + s + ' <span>' + byStatus[s].length + '</span></h4>';
+        byStatus[s].forEach(function(r){
+          html += '<div class="kcard"><div class="n">' + esc(r.name||"—") + '</div><div class="t">' + esc(r.title||"") + (r.company ? ' @ '+esc(r.company) : '') + '</div></div>';
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+    } else {
+      var t = '<table class="plain"><thead><tr><th>Name</th><th>Title</th><th>Company</th><th>Status</th><th>Match</th><th>Link</th></tr></thead><tbody>';
+      rows.forEach(function(r){
+        t += '<tr><td>'+esc(r.name)+'</td><td>'+esc(r.title)+'</td><td>'+esc(r.company)+'</td><td>'+esc(r.status||"New")+'</td><td>'+esc(r.matchScore||"")+'</td><td>'+(r.linkedinUrl?'<a class="li" href="'+escAttr(r.linkedinUrl)+'" target="_blank" rel="noopener">Profile ↗</a>':'')+'</td></tr>';
+      });
+      t += '</tbody></table>';
+      wrap.innerHTML = t;
+    }
+  }
+
+  // ---------- minimal RFC4180 CSV parser ----------
+  function parseCSV(text){
+    var rows = []; var row = []; var field = ""; var inQuotes = false;
+    for (var i=0; i<text.length; i++){
+      var ch = text[i], next = text[i+1];
+      if (inQuotes){
+        if (ch === '"' && next === '"'){ field += '"'; i++; }
+        else if (ch === '"'){ inQuotes = false; }
+        else { field += ch; }
+      } else {
+        if (ch === '"'){ inQuotes = true; }
+        else if (ch === ','){ row.push(field); field = ""; }
+        else if (ch === '\n'){ row.push(field); rows.push(row); row = []; field = ""; }
+        else if (ch === '\r'){ /* skip */ }
+        else { field += ch; }
+      }
+    }
+    if (field.length || row.length){ row.push(field); rows.push(row); }
+    if (!rows.length) return [];
+    var headers = rows[0].map(function(h){ return h.trim(); });
+    return rows.slice(1).filter(function(r){ return r.length > 1 || (r[0] && r[0].trim()); }).map(function(r){
+      var obj = {};
+      headers.forEach(function(h, idx){ obj[h] = r[idx] !== undefined ? r[idx] : ""; });
+      return obj;
+    });
+  }
+
+  // ---------- escaping ----------
+  function esc(s){
+    if (s === undefined || s === null) return "";
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function escAttr(s){ return esc(s).replace(/"/g,"&quot;"); }
+})();
+</script>
+</body>
+</html>
