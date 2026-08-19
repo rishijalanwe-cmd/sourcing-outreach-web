@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sourcing + Outreach Agent</title>
+<title>Hiring Agents</title>
 <style>
   :root{
     --bg:#f6f5f3; --panel:#ffffff; --border:#e5e2dc; --text:#1f1c18; --muted:#78726a;
@@ -107,6 +107,21 @@
   table.plain td{padding:9px 8px; border-bottom:1px solid #f0eee9; vertical-align:top;}
   .keyrow{display:flex; gap:8px; align-items:center;}
   .keyrow input{flex:1;}
+
+  .chat-thread{display:flex; flex-direction:column; gap:12px; max-height:440px; overflow-y:auto; padding:4px 2px 8px;}
+  .chat-msg{max-width:78%; padding:10px 13px; border-radius:12px; font-size:13px; line-height:1.5; white-space:pre-wrap;}
+  .chat-msg.assistant{background:#f2f0ec; color:var(--text); align-self:flex-start; border-bottom-left-radius:3px;}
+  .chat-msg.user{background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:3px;}
+  .chat-input-row{display:flex; gap:8px; margin-top:14px; align-items:flex-end;}
+  .chat-input-row textarea{flex:1; font-family:inherit;}
+  .chat-typing{align-self:flex-start; color:var(--muted); font-size:12.5px; padding:2px 4px;}
+
+  .sc-section{margin-top:18px;}
+  .sc-section h3{margin:0 0 6px; font-size:13.5px;}
+  .sc-mission{background:var(--accent-soft); color:var(--accent-dark); padding:12px 14px; border-radius:9px; font-size:14px; font-weight:600; line-height:1.5;}
+  .sc-bar{background:#f2f0ec; border-radius:9px; padding:12px 14px; font-size:12.5px; line-height:1.7;}
+  .sc-bar strong{color:#4a453e;}
+  ul.sc-list{margin:6px 0 0; padding-left:18px; font-size:12.5px; line-height:1.7; color:#544f47;}
   footer.foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:28px;}
   footer.foot a{color:var(--accent-dark);}
   @media (max-width:720px){ .grid{grid-template-columns:1fr;} .kanban{grid-template-columns:repeat(3,minmax(160px,1fr));} }
@@ -117,20 +132,46 @@
 
   <header class="top">
     <div class="brand">
-      <div class="mark">SO</div>
+      <div class="mark">HA</div>
       <div>
-        <h1>Sourcing + Outreach Agent</h1>
-        <p>Find candidates against a scorecard. Draft outreach that isn't obviously templated. You still click send.</p>
+        <h1>Hiring Agents</h1>
+        <p>Build a scorecard, then find candidates against it and draft outreach that isn't obviously templated. You still click send.</p>
       </div>
     </div>
     <button id="connStatus" class="status-pill demo" title="Click to go to Setup"><span class="dot"></span>Add your API keys</button>
   </header>
 
   <nav class="tabs">
+    <button data-tab="scorecard">Scorecard</button>
     <button class="active" data-tab="source">Source</button>
     <button data-tab="pipeline">Pipeline</button>
     <button data-tab="setup">Your keys</button>
   </nav>
+
+  <!-- SCORECARD TAB -->
+  <section id="tab-scorecard" style="display:none;">
+    <div class="panel">
+      <h2>Build a scorecard first</h2>
+      <p class="sub">A scorecard isn't a job description — it's mission, outcomes, and competencies, defined <em>before</em> you source, so you know what "yes" looks like. This is Fabric's <code class="inline">scorecard-builder</code> skill as a guided conversation. Answer in your own words; it'll push back on vague ones.</p>
+
+      <div class="chat-thread" id="scorecard-thread"></div>
+
+      <div class="chat-input-row">
+        <textarea id="scorecard-input" placeholder="Type your answer…" rows="2"></textarea>
+        <button class="btn btn-primary" id="btn-scorecard-send">Send</button>
+      </div>
+      <div id="scorecard-chat-banner"></div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-scorecard-generate" disabled>Generate scorecard document</button>
+        <button class="btn btn-ghost" id="btn-scorecard-restart">Start over</button>
+      </div>
+      <p class="small-note" id="scorecard-generate-hint" style="margin-top:8px;">Answer a few questions first — mission, a couple of outcomes, and a competency or two — then generate whenever you're ready. You don't have to finish the whole framework.</p>
+      <div id="scorecard-banner"></div>
+    </div>
+
+    <div id="scorecard-doc-wrap"></div>
+  </section>
 
   <!-- SOURCE TAB -->
   <section id="tab-source">
@@ -255,7 +296,8 @@
         <summary>How this works, and why it needs your own keys</summary>
         <p class="small-note">
           This page is free for anyone to use — but Exa and your chosen LLM provider both charge per request, and this site has no login. If it used one shared key, anyone with the link could run up someone else's bill with no way to stop them. Bring-your-own-keys means the only person who can ever be charged for your search is you.<br><br>
-          <strong>What happens when you click "Find candidates":</strong> your ICP and your keys are sent once, over HTTPS, to this site's own <code class="inline">/api/source</code> function. That function calls Exa to search, asks your chosen LLM to score and shortlist against your must-haves, optionally calls Apollo to find a verified email for each shortlisted candidate, then asks the LLM to draft a connection note and follow-up for each one. The results come straight back to this page. Nothing is written to a database — there isn't one.<br><br>
+          <strong>Scorecard tab:</strong> each message you send goes to this site's own <code class="inline">/api/scorecard</code> function, which forwards the conversation to your chosen LLM and returns its reply — nothing else. Generating the document sends the same transcript once more with an instruction to compile it into structured JSON.<br><br>
+          <strong>Source tab:</strong> your ICP and your keys are sent once, over HTTPS, to this site's own <code class="inline">/api/source</code> function. That function calls Exa to search, asks your chosen LLM to score and shortlist against your must-haves, optionally calls Apollo to find a verified email for each shortlisted candidate, then asks the LLM to draft a connection note and follow-up for each one. The results come straight back to this page. Nothing is written to a database in either case — there isn't one.<br><br>
           Nothing here ever sends a LinkedIn connection request, message, or email automatically. Every draft is exactly that — a draft. You copy it and send it yourself, from your own account.
         </p>
       </details>
@@ -274,8 +316,11 @@
     keys: { exa:"", apollo:"", llmProvider:"anthropic", llmApiKey:"", llmModel:"", llmBaseUrl:"" },
     icp: { mustHave:[], niceToHave:[], disqualifiers:[] },
     candidates: [],
-    pipelineView: "kanban"
+    pipelineView: "kanban",
+    scorecard: { messages: [], doc: null }
   };
+
+  var SCORECARD_OPENER = "Let's build this properly -- a scorecard, not a job description. A few basics first: what role are you building this for, and why does it exist right now? What's the specific problem it solves for the company at this moment?";
 
   var LLM_MODEL_HINTS = {
     anthropic: "(optional — defaults to a current Claude model)",
@@ -292,7 +337,7 @@
   });
   function activateTab(tab){
     document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === tab); });
-    ["source","pipeline","setup"].forEach(function(t){
+    ["scorecard","source","pipeline","setup"].forEach(function(t){
       document.getElementById("tab-"+t).style.display = (t === tab) ? "" : "none";
     });
   }
@@ -381,6 +426,31 @@
   }
   function clearBanner(id){ document.getElementById(id).innerHTML = ""; }
 
+  // ---------- shared POST-JSON helper ----------
+  // Reads the response as text first -- a platform-level error (timeout, crash) returns
+  // plain text/HTML, not JSON, and calling res.json() directly on that throws a confusing
+  // "Unexpected token" error instead of a readable message.
+  function postJson(url, payload){
+    return fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      return res.text().then(function(raw){
+        var data;
+        try { data = JSON.parse(raw); }
+        catch (e) {
+          if (res.status === 504) {
+            throw new Error("The request took too long and timed out (504). Try again, or a shorter message.");
+          }
+          throw new Error("Server returned an unexpected response (status " + res.status + "). " + raw.slice(0, 150));
+        }
+        if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
+        return data;
+      });
+    });
+  }
+
   // ---------- sample data ----------
   function sampleCandidates(){
     return [
@@ -446,26 +516,11 @@
     btn.innerHTML = '<span class="spinner"></span> Searching…';
     clearBanner("source-banner");
 
-    fetch("/api/source", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ icp: icp, keys: state.keys })
-    }).then(function(res){
-      // Read as text first -- a platform-level error (timeout, crash) returns plain
-      // text/HTML, not JSON, and calling res.json() directly on that throws a confusing
-      // "Unexpected token" error instead of a readable message.
-      return res.text().then(function(raw){
-        var data;
-        try { data = JSON.parse(raw); }
-        catch (e) {
-          if (res.status === 504) {
-            throw new Error("The search took too long and timed out (504). Try lowering \"Max candidates,\" or removing your Apollo key temporarily to skip enrichment, then retry.");
-          }
-          throw new Error("Server returned an unexpected response (status " + res.status + "). " + raw.slice(0, 150));
-        }
-        if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
-        return data;
-      });
+    postJson("/api/source", { icp: icp, keys: state.keys }).catch(function(err){
+      if (err.message.indexOf("timed out (504)") > -1){
+        throw new Error("The search took too long and timed out (504). Try lowering \"Max candidates,\" or removing your Apollo key temporarily to skip enrichment, then retry.");
+      }
+      throw err;
     }).then(function(data){
       var list = data.candidates || [];
       state.candidates = list;
@@ -623,6 +678,263 @@
       return obj;
     });
   }
+
+  // ---------- scorecard builder (chat) ----------
+  function scorecardReady(){ return !!state.keys.llmApiKey; }
+
+  function renderScorecardThread(){
+    var thread = document.getElementById("scorecard-thread");
+    thread.innerHTML = state.scorecard.messages.map(function(m){
+      return '<div class="chat-msg ' + (m.role === "user" ? "user" : "assistant") + '">' + esc(m.content) + '</div>';
+    }).join("");
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function startScorecardConversation(){
+    state.scorecard = { messages: [{ role:"assistant", content: SCORECARD_OPENER }], doc: null };
+    renderScorecardThread();
+    document.getElementById("scorecard-doc-wrap").innerHTML = "";
+    document.getElementById("btn-scorecard-generate").disabled = true;
+    clearBanner("scorecard-banner");
+    clearBanner("scorecard-chat-banner");
+  }
+
+  document.getElementById("btn-scorecard-restart").addEventListener("click", function(){
+    if (state.scorecard.messages.length > 1 && !confirm("Start over? This clears the current conversation (nothing was ever saved server-side).")) return;
+    startScorecardConversation();
+  });
+
+  function userTurnCount(){
+    return state.scorecard.messages.filter(function(m){ return m.role === "user"; }).length;
+  }
+
+  function sendScorecardMessage(){
+    var input = document.getElementById("scorecard-input");
+    var text = input.value.trim();
+    if (!text) return;
+    if (!scorecardReady()){
+      showBanner("scorecard-chat-banner","warn","Add an LLM provider key in the \"Your keys\" tab first.");
+      return;
+    }
+    state.scorecard.messages.push({ role:"user", content:text });
+    input.value = "";
+    renderScorecardThread();
+    clearBanner("scorecard-chat-banner");
+
+    var sendBtn = document.getElementById("btn-scorecard-send");
+    sendBtn.disabled = true;
+    var thread = document.getElementById("scorecard-thread");
+    var typing = document.createElement("div");
+    typing.className = "chat-typing";
+    typing.textContent = "Thinking…";
+    thread.appendChild(typing);
+    thread.scrollTop = thread.scrollHeight;
+
+    postJson("/api/scorecard", { mode:"chat", messages: state.scorecard.messages, keys: state.keys })
+      .then(function(data){
+        state.scorecard.messages.push({ role:"assistant", content: data.reply || "" });
+        renderScorecardThread();
+        if (userTurnCount() >= 2){
+          document.getElementById("btn-scorecard-generate").disabled = false;
+          document.getElementById("scorecard-generate-hint").textContent = "Generate whenever you're ready -- you don't have to finish the whole framework first. More conversation makes for a sharper scorecard.";
+        }
+      })
+      .catch(function(err){
+        showBanner("scorecard-chat-banner","error","Message failed: " + err.message);
+      })
+      .finally(function(){
+        sendBtn.disabled = false;
+        typing.remove();
+      });
+  }
+  document.getElementById("btn-scorecard-send").addEventListener("click", sendScorecardMessage);
+  document.getElementById("scorecard-input").addEventListener("keydown", function(e){
+    if (e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      sendScorecardMessage();
+    }
+  });
+
+  document.getElementById("btn-scorecard-generate").addEventListener("click", function(){
+    if (!scorecardReady()){
+      showBanner("scorecard-banner","warn","Add an LLM provider key in the \"Your keys\" tab first.");
+      return;
+    }
+    var btn = document.getElementById("btn-scorecard-generate");
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.innerHTML = '<span class="spinner"></span> Generating…';
+    clearBanner("scorecard-banner");
+
+    postJson("/api/scorecard", { mode:"finalize", messages: state.scorecard.messages, keys: state.keys })
+      .then(function(data){
+        state.scorecard.doc = data.scorecard;
+        renderScorecardDoc(data.scorecard);
+        showBanner("scorecard-banner","good","Scorecard generated. Review it, then send the must-haves straight to the Source tab if it looks right.");
+      })
+      .catch(function(err){
+        showBanner("scorecard-banner","error","Couldn't generate the scorecard: " + err.message);
+      })
+      .finally(function(){
+        btn.disabled = false;
+        btn.textContent = origText;
+      });
+  });
+
+  function competencyTable(title, rows){
+    if (!rows || !rows.length) return "";
+    var t = '<div class="sc-section"><h3>' + esc(title) + '</h3><table class="plain"><thead><tr><th>Competency</th><th>What a 5 looks like</th><th>What a 1 looks like</th><th>Weight</th><th>Min score</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      t += '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.five) + '</td><td>' + esc(r.one) + '</td><td>' + esc(r.weight) + '</td><td>' + esc(r.minScore) + '</td></tr>';
+    });
+    t += '</tbody></table></div>';
+    return t;
+  }
+
+  function renderScorecardDoc(doc){
+    var wrap = document.getElementById("scorecard-doc-wrap");
+    var comp = doc.competencies || { roleSpecific:[], cultural:[], leadership:[] };
+    var html = '<div class="panel">';
+    html += '<h2>Scorecard' + (doc.roleTitle ? ": " + esc(doc.roleTitle) : "") + '</h2>';
+    html += '<p class="sub">' + (doc.seniority ? esc(doc.seniority) + " level. " : "") + 'Generated from the conversation on the left -- read it over, this is a starting point, not gospel.</p>';
+
+    if (doc.mission){
+      html += '<div class="sc-section"><h3>Mission</h3><div class="sc-mission">' + esc(doc.mission) + '</div></div>';
+    }
+
+    if (doc.outcomes && doc.outcomes.length){
+      html += '<div class="sc-section"><h3>Outcomes (6-12 months)</h3><table class="plain"><thead><tr><th>#</th><th>Outcome</th><th>Measure of success</th><th>Priority</th></tr></thead><tbody>';
+      doc.outcomes.forEach(function(o, i){
+        html += '<tr><td>' + (i+1) + '</td><td>' + esc(o.outcome) + '</td><td>' + esc(o.measure) + '</td><td>' + esc(o.priority) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    html += competencyTable("Competencies -- role-specific", comp.roleSpecific);
+    html += competencyTable("Competencies -- cultural", comp.cultural);
+    html += competencyTable("Competencies -- leadership", comp.leadership);
+
+    if (doc.hiringBar && (doc.hiringBar.minAverage || doc.hiringBar.hardStops || doc.hiringBar.cultureNonNegotiables)){
+      html += '<div class="sc-section"><h3>Hiring bar</h3><div class="sc-bar">';
+      if (doc.hiringBar.minAverage) html += '<div><strong>Minimum average score:</strong> ' + esc(doc.hiringBar.minAverage) + '</div>';
+      if (doc.hiringBar.hardStops) html += '<div><strong>Hard stops:</strong> ' + esc(doc.hiringBar.hardStops) + '</div>';
+      if (doc.hiringBar.cultureNonNegotiables) html += '<div><strong>Culture non-negotiables:</strong> ' + esc(doc.hiringBar.cultureNonNegotiables) + '</div>';
+      html += '</div></div>';
+    }
+
+    if (doc.antiPatterns && doc.antiPatterns.length){
+      html += '<div class="sc-section"><h3>Anti-patterns (who NOT to hire)</h3><ul class="sc-list">';
+      doc.antiPatterns.forEach(function(a){ html += '<li>' + esc(a) + '</li>'; });
+      html += '</ul></div>';
+    }
+
+    html += '<div class="row-actions">' +
+      '<button class="btn btn-primary" id="btn-scorecard-to-source">Send must-haves to Source tab</button>' +
+      '<button class="btn btn-ghost" id="btn-scorecard-copy">Copy as Markdown</button>' +
+      '<button class="btn btn-ghost" id="btn-scorecard-download">Download .md</button>' +
+      '</div>';
+    html += '</div>';
+    wrap.innerHTML = html;
+
+    document.getElementById("btn-scorecard-to-source").addEventListener("click", function(){ sendScorecardToSource(doc); });
+    document.getElementById("btn-scorecard-copy").addEventListener("click", function(){
+      var md = scorecardMarkdown(doc);
+      navigator.clipboard && navigator.clipboard.writeText(md).then(function(){
+        showBanner("scorecard-banner","good","Copied as Markdown.");
+      }).catch(function(){});
+    });
+    document.getElementById("btn-scorecard-download").addEventListener("click", function(){
+      var md = scorecardMarkdown(doc);
+      var blob = new Blob([md], { type:"text/markdown;charset=utf-8;" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "scorecard-" + slugify(doc.roleTitle || "role") + ".md";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  }
+
+  function scorecardMarkdown(doc){
+    var comp = doc.competencies || { roleSpecific:[], cultural:[], leadership:[] };
+    var lines = [];
+    lines.push("# Scorecard: " + (doc.roleTitle || "Untitled role"));
+    if (doc.seniority) lines.push("\n**Seniority:** " + doc.seniority);
+    if (doc.mission) lines.push("\n## Mission\n\n" + doc.mission);
+    if (doc.outcomes && doc.outcomes.length){
+      lines.push("\n## Outcomes (6-12 months)\n");
+      lines.push("| # | Outcome | Measure of Success | Priority |");
+      lines.push("|---|---------|--------------------|-----------|");
+      doc.outcomes.forEach(function(o, i){ lines.push("| " + (i+1) + " | " + mdEscape(o.outcome) + " | " + mdEscape(o.measure) + " | " + mdEscape(o.priority) + " |"); });
+    }
+    ["roleSpecific","cultural","leadership"].forEach(function(key){
+      var rows = comp[key];
+      if (!rows || !rows.length) return;
+      var label = key === "roleSpecific" ? "Role-Specific" : key === "cultural" ? "Cultural" : "Leadership";
+      lines.push("\n### " + label + "\n");
+      lines.push("| Competency | What a 5 Looks Like | What a 1 Looks Like | Weight | Min Score |");
+      lines.push("|-----------|---------------------|---------------------|--------|-----------|");
+      rows.forEach(function(r){ lines.push("| " + mdEscape(r.name) + " | " + mdEscape(r.five) + " | " + mdEscape(r.one) + " | " + mdEscape(r.weight) + " | " + mdEscape(r.minScore) + " |"); });
+    });
+    if (doc.hiringBar){
+      lines.push("\n## Hiring Bar\n");
+      if (doc.hiringBar.minAverage) lines.push("- **Minimum average score:** " + doc.hiringBar.minAverage);
+      if (doc.hiringBar.hardStops) lines.push("- **Hard stops:** " + doc.hiringBar.hardStops);
+      if (doc.hiringBar.cultureNonNegotiables) lines.push("- **Culture non-negotiables:** " + doc.hiringBar.cultureNonNegotiables);
+    }
+    if (doc.antiPatterns && doc.antiPatterns.length){
+      lines.push("\n## Anti-Patterns (Who NOT to Hire)\n");
+      doc.antiPatterns.forEach(function(a){ lines.push("- " + a); });
+    }
+    return lines.join("\n") + "\n";
+  }
+
+  function mdEscape(s){ return (s === undefined || s === null) ? "" : String(s).replace(/\|/g, "\\|"); }
+  function slugify(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "role"; }
+
+  // Maps the generated scorecard onto the Source tab's ICP fields. This is a heuristic,
+  // not a perfect translation -- competencies aren't naturally must-have/nice-to-have/
+  // disqualifier, so it's meant as a fast starting point you edit, not a final answer.
+  function sendScorecardToSource(doc){
+    var comp = doc.competencies || { roleSpecific:[], cultural:[], leadership:[] };
+
+    if (doc.roleTitle) document.getElementById("f-title").value = doc.roleTitle;
+
+    if (doc.seniority){
+      var seniorityMap = { entry:"Entry", junior:"Entry", mid:"Mid", senior:"Senior", staff:"Staff / Principal", principal:"Staff / Principal", lead:"Staff / Principal", manager:"Manager", director:"Director+", executive:"Director+", vp:"Director+" };
+      var lower = doc.seniority.toLowerCase();
+      var matchedOption = "Senior";
+      Object.keys(seniorityMap).forEach(function(key){ if (lower.indexOf(key) > -1) matchedOption = seniorityMap[key]; });
+      document.getElementById("f-seniority").value = matchedOption;
+    }
+
+    var mustHave = (comp.roleSpecific || []).filter(function(c){ return (c.weight || "").toLowerCase() === "high"; }).map(function(c){ return c.name; });
+    if (!mustHave.length) mustHave = (comp.roleSpecific || []).map(function(c){ return c.name; });
+    var leadershipHigh = (comp.leadership || []).filter(function(c){ return (c.weight || "").toLowerCase() === "high"; }).map(function(c){ return c.name; });
+    mustHave = mustHave.concat(leadershipHigh);
+
+    var niceToHave = (comp.cultural || []).map(function(c){ return c.name; })
+      .concat((comp.roleSpecific || []).filter(function(c){ return (c.weight || "").toLowerCase() !== "high"; }).map(function(c){ return c.name; }));
+
+    var disqualifiers = (doc.antiPatterns || []).slice();
+    if (doc.hiringBar && doc.hiringBar.hardStops) disqualifiers.push(doc.hiringBar.hardStops);
+
+    setChips("chips-must", "mustHave", mustHave.filter(Boolean));
+    setChips("chips-nice", "niceToHave", niceToHave.filter(Boolean));
+    setChips("chips-dq", "disqualifiers", disqualifiers.filter(Boolean));
+
+    activateTab("source");
+    showBanner("source-banner","info","Pre-filled from your scorecard -- this is a heuristic mapping (competencies aren't naturally must-have/disqualifier), so review the chips before you search.");
+  }
+
+  function setChips(boxId, target, values){
+    var box = document.getElementById(boxId);
+    box.querySelectorAll(".chip").forEach(function(c){ c.remove(); });
+    state.icp[target] = [];
+    var input = box.querySelector(".chip-input");
+    values.forEach(function(v){ addChip(box, target, v); });
+    box.appendChild(input); // keep the input last
+  }
+
+  startScorecardConversation();
 
   // ---------- escaping ----------
   function esc(s){

@@ -14,34 +14,9 @@
 //
 // This never contacts LinkedIn directly and never sends anything -- it drafts only.
 //
-// LLM providers: any of "anthropic" (native Messages API), or "openai" / "openrouter" /
-// "custom" (all speak the OpenAI-compatible /chat/completions shape -- this covers OpenAI
-// itself, OpenRouter, and most self-hosted or third-party OpenAI-compatible endpoints,
-// e.g. Groq, Together, a local Ollama/LM Studio server). See PROVIDER_DEFAULTS below for
-// default base URLs and models -- callers can override the model (and, for "custom", must
-// supply their own base URL) via keys.llmModel / keys.llmBaseUrl.
+// LLM provider handling lives in ../lib/llm.js (shared with api/scorecard.js).
 
-const PROVIDER_DEFAULTS = {
-  anthropic: {
-    baseUrl: "https://api.anthropic.com/v1",
-    // If you hit a "model not found" error, check https://docs.claude.com/en/docs/about-claude/models
-    // for the current model slug.
-    model: "claude-sonnet-4-5-20250929",
-  },
-  openai: {
-    baseUrl: "https://api.openai.com/v1",
-    // Check https://platform.openai.com/docs/models for the current recommended model.
-    model: "gpt-4o-mini",
-  },
-  openrouter: {
-    baseUrl: "https://openrouter.ai/api/v1",
-    model: "", // no safe universal default -- OpenRouter hosts hundreds of models, caller must specify
-  },
-  custom: {
-    baseUrl: "", // caller must supply keys.llmBaseUrl -- any OpenAI-compatible /chat/completions server
-    model: "", // caller must supply keys.llmModel
-  },
-};
+const { resolveLlmConfig, callLlm, parseJsonArray, arr, safeText } = require("../lib/llm.js");
 
 const HARD_MAX_CANDIDATES = 30; // server-side ceiling regardless of what the client requests
 
@@ -113,30 +88,6 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({ error: message });
   }
 };
-
-// ---------------------------------------------------------------------------
-// LLM provider resolution
-// ---------------------------------------------------------------------------
-
-function resolveLlmConfig(keys) {
-  const provider = (keys.llmProvider || "anthropic").toLowerCase();
-  const defaults = PROVIDER_DEFAULTS[provider];
-  if (!defaults) {
-    return { error: `Unknown llmProvider "${provider}". Use one of: ${Object.keys(PROVIDER_DEFAULTS).join(", ")}.` };
-  }
-
-  const baseUrl = (keys.llmBaseUrl || defaults.baseUrl || "").replace(/\/+$/, "");
-  const model = keys.llmModel || defaults.model;
-
-  if (provider === "custom" && !baseUrl) {
-    return { error: 'keys.llmBaseUrl is required when llmProvider is "custom" (the base URL of your OpenAI-compatible endpoint, e.g. http://localhost:11434/v1).' };
-  }
-  if (!model) {
-    return { error: `keys.llmModel is required for provider "${provider}" -- there's no safe default model to assume for it.` };
-  }
-
-  return { provider, apiKey: keys.llmApiKey, baseUrl, model };
-}
 
 // ---------------------------------------------------------------------------
 // Exa search
@@ -230,7 +181,7 @@ async function scoreWithLlm(icp, results, llm, maxCandidates) {
     ),
   ].join("\n");
 
-  const text = await callLlm(system, user, llm, 4000);
+  const text = await callLlm(system, [{ role: "user", content: user }], llm, 4000);
   return parseJsonArray(text);
 }
 
@@ -283,7 +234,7 @@ async function draftWithLlm(icp, candidates, llm) {
     JSON.stringify(candidates.map((c) => ({ id: c.id, name: c.name, title: c.title, company: c.company, matchReason: c.matchReason }))),
   ].join("\n");
 
-  const text = await callLlm(system, user, llm, 4000);
+  const text = await callLlm(system, [{ role: "user", content: user }], llm, 4000);
   const drafts = parseJsonArray(text);
   const byId = new Map(drafts.map((d) => [d.id, d]));
 
@@ -293,117 +244,4 @@ async function draftWithLlm(icp, candidates, llm) {
     followUpMessage: (byId.get(c.id) && byId.get(c.id).followUpMessage) || "",
     status: "New",
   }));
-}
-
-// ---------------------------------------------------------------------------
-// LLM call helper -- branches to the Anthropic Messages API, or to the
-// OpenAI-compatible /chat/completions shape used by OpenAI, OpenRouter, and
-// most other providers (self-hosted included).
-// ---------------------------------------------------------------------------
-
-async function callLlm(system, userText, llm, maxTokens) {
-  if (llm.provider === "anthropic") {
-    return callAnthropic(system, userText, llm, maxTokens);
-  }
-  return callOpenAiCompatible(system, userText, llm, maxTokens);
-}
-
-async function callAnthropic(system, userText, llm, maxTokens) {
-  const resp = await fetch(`${llm.baseUrl}/messages`, {
-    method: "POST",
-    headers: {
-      "x-api-key": llm.apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: llm.model,
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: userText }],
-    }),
-  });
-  if (!resp.ok) {
-    const text = await safeText(resp);
-    throw new Error(`Anthropic call failed (${resp.status}): ${text.slice(0, 300)}`);
-  }
-  const data = await resp.json();
-  const block = data && data.content && data.content[0];
-  return (block && block.text) || "";
-}
-
-async function callOpenAiCompatible(system, userText, llm, maxTokens) {
-  const headers = {
-    Authorization: `Bearer ${llm.apiKey}`,
-    "Content-Type": "application/json",
-  };
-  // OpenRouter looks at these for its own attribution/analytics -- optional, harmless elsewhere.
-  if (llm.provider === "openrouter") {
-    headers["HTTP-Referer"] = "https://sourcing-outreach-agent.example";
-    headers["X-Title"] = "Sourcing + Outreach Agent";
-  }
-
-  const resp = await fetch(`${llm.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: llm.model,
-      max_tokens: maxTokens,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: userText },
-      ],
-    }),
-  });
-  if (!resp.ok) {
-    const text = await safeText(resp);
-    throw new Error(`${capitalize(llm.provider)} call failed (${resp.status}): ${text.slice(0, 300)}`);
-  }
-  const data = await resp.json();
-  const choice = data && data.choices && data.choices[0];
-  return (choice && choice.message && choice.message.content) || "";
-}
-
-function capitalize(s) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-function parseJsonArray(text) {
-  if (!text) return [];
-  // Strip markdown code fences if the model added them despite instructions.
-  const cleaned = text.trim().replace(/^```(json)?/i, "").replace(/```$/, "").trim();
-  try {
-    const parsed = JSON.parse(cleaned);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    // Last resort: grab the first [...] block in the text.
-    const match = cleaned.match(/\[[\s\S]*\]/);
-    if (match) {
-      try {
-        const parsed = JSON.parse(match[0]);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e2) {
-        return [];
-      }
-    }
-    return [];
-  }
-}
-
-// ---------------------------------------------------------------------------
-// small utils
-// ---------------------------------------------------------------------------
-
-function arr(v) {
-  if (Array.isArray(v)) return v;
-  if (typeof v === "string" && v.trim()) return v.split(",").map((s) => s.trim()).filter(Boolean);
-  return [];
-}
-
-async function safeText(resp) {
-  try {
-    return await resp.text();
-  } catch (e) {
-    return "";
-  }
 }
